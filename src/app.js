@@ -6,6 +6,14 @@ const projectRoutes = require("./routes/projectRoutes");
 const customerRoutes =
   require("./routes/customerRoutes");
 
+const dashboardRoutes =
+  require("./routes/dashboardRoutes");
+
+  const documentRoutes =
+  require(
+    "./routes/documentRoutes"
+  );
+
 const app = express();
 
 app.use(cors());
@@ -19,6 +27,23 @@ app.use("/api/projects", projectRoutes);
 app.use(
   "/api/customers",
   customerRoutes
+);
+
+app.use(
+  "/api/dashboard",
+  dashboardRoutes
+);
+
+app.use(
+  "/api/documents",
+  documentRoutes
+);
+
+app.use(
+  "/uploads",
+  express.static(
+    "uploads"
+  )
 );
 
 const PORT = 5001;
