@@ -79,13 +79,24 @@ router.post("/", async (req, res) => {
 
 
 router.put("/:id", async (req, res) => {
+
     try {
 
         const { id } = req.params;
 
         const {
+            project_name,
+            po_number,
+            project_value,
+            start_date,
+            expected_delivery,
             status,
             dispatch_status,
+            transporter,
+            lr_number,
+            vehicle_number,
+            dispatch_date,
+            delivery_date,
         } = req.body;
 
         const result =
@@ -93,14 +104,34 @@ router.put("/:id", async (req, res) => {
                 `
                 UPDATE projects
                 SET
-                    status = $1,
-                    dispatch_status = $2
-                WHERE id = $3
+                    project_name = $1,
+                    po_number = $2,
+                    project_value = $3,
+                    start_date = $4,
+                    expected_delivery = $5,
+                    status = $6,
+                    dispatch_status = $7,
+                    transporter = $8,
+                    lr_number = $9,
+                    vehicle_number = $10,
+                    dispatch_date = $11,
+                    delivery_date = $12
+                WHERE id = $13
                 RETURNING *
                 `,
                 [
+                    project_name,
+                    po_number,
+                    project_value,
+                    start_date,
+                    expected_delivery,
                     status,
                     dispatch_status,
+                    transporter,
+                    lr_number,
+                    vehicle_number,
+                    dispatch_date,
+                    delivery_date,
                     id,
                 ]
             );
@@ -114,9 +145,10 @@ router.put("/:id", async (req, res) => {
         res.status(500).json({
             message: "Server Error",
         });
-    }
-});
 
+    }
+
+});
 
 
 router.get("/:id", async (req, res) => {
@@ -155,33 +187,33 @@ router.get("/:id", async (req, res) => {
 
 
 router.delete("/:id", async (req, res) => {
-  try {
+    try {
 
-    const { id } = req.params;
+        const { id } = req.params;
 
-    await pool.query(
-      `
+        await pool.query(
+            `
       DELETE FROM projects
       WHERE id = $1
       `,
-      [id]
-    );
+            [id]
+        );
 
-    res.json({
-      message:
-        "Project Deleted",
-    });
+        res.json({
+            message:
+                "Project Deleted",
+        });
 
-  } catch (error) {
+    } catch (error) {
 
-    console.error(error);
+        console.error(error);
 
-    res.status(500).json({
-      message:
-        "Server Error",
-    });
+        res.status(500).json({
+            message:
+                "Server Error",
+        });
 
-  }
+    }
 });
 
 module.exports = router;

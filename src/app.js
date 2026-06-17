@@ -9,9 +9,13 @@ const customerRoutes =
 const dashboardRoutes =
   require("./routes/dashboardRoutes");
 
-  const documentRoutes =
+const documentRoutes =
   require(
     "./routes/documentRoutes"
+  );
+const updateRoutes =
+  require(
+    "./routes/updateRoutes"
   );
 
 const app = express();
@@ -44,6 +48,11 @@ app.use(
   express.static(
     "uploads"
   )
+);
+
+app.use(
+  "/api/updates",
+  updateRoutes
 );
 
 const PORT = 5001;
