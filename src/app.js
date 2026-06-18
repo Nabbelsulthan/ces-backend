@@ -17,8 +17,13 @@ const updateRoutes =
   require(
     "./routes/updateRoutes"
   );
+const fatReportRoutes =
+  require("./routes/fatReportRoutes");
 
 const app = express();
+
+const path =
+  require("path");
 
 app.use(cors());
 app.use(express.json());
@@ -51,8 +56,23 @@ app.use(
 );
 
 app.use(
+  "/uploads",
+  express.static(
+    path.join(
+      __dirname,
+      "../uploads"
+    )
+  )
+);
+
+app.use(
   "/api/updates",
   updateRoutes
+);
+
+app.use(
+  "/api/fat-reports",
+  fatReportRoutes
 );
 
 const PORT = 5001;
