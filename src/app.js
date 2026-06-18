@@ -20,6 +20,20 @@ const updateRoutes =
 const fatReportRoutes =
   require("./routes/fatReportRoutes");
 
+const authRoutes =
+  require(
+    "./routes/authRoutes"
+  );
+const customerAuthRoutes =
+  require(
+    "./routes/customerAuthRoutes"
+  );
+
+const galleryRoutes =
+  require(
+    "./routes/galleryRoutes"
+  );
+
 const app = express();
 
 const path =
@@ -73,6 +87,21 @@ app.use(
 app.use(
   "/api/fat-reports",
   fatReportRoutes
+);
+
+app.use(
+  "/api/auth",
+  authRoutes
+);
+
+app.use(
+  "/api/customer-auth",
+  customerAuthRoutes
+);
+
+app.use(
+  "/api/gallery",
+  galleryRoutes
 );
 
 const PORT = 5001;

@@ -2,24 +2,38 @@ const express = require("express");
 const router = express.Router();
 
 const pool = require("../config/db");
+const bcrypt =
+  require("bcrypt");
 
 router.get("/", async (req, res) => {
   try {
+
     const result =
       await pool.query(
-        "SELECT * FROM customers"
+        `
+        SELECT
+          id,
+          company_name,
+          contact_person,
+          email,
+          phone,
+          username
+        FROM customers
+        `
       );
 
     res.json(result.rows);
+
   } catch (error) {
+
     console.error(error);
 
     res.status(500).json({
       message: "Server Error",
     });
+
   }
 });
-
 router.post("/", async (req, res) => {
   try {
     const {
@@ -30,7 +44,11 @@ router.post("/", async (req, res) => {
       username,
       password,
     } = req.body;
-
+    const hashedPassword =
+      await bcrypt.hash(
+        password,
+        10
+      );
     const result =
       await pool.query(
         `
@@ -53,7 +71,7 @@ router.post("/", async (req, res) => {
           email,
           phone,
           username,
-          password,
+          hashedPassword,
         ]
       );
 
@@ -70,32 +88,38 @@ router.post("/", async (req, res) => {
 });
 
 router.get("/:id", async (req, res) => {
-    try {
+  try {
 
-        const { id } = req.params;
+    const { id } = req.params;
 
-        const result =
-            await pool.query(
-                `
-                SELECT *
-                FROM customers
-                WHERE id = $1
+    const result =
+      await pool.query(
+        `
+               SELECT
+  id,
+  company_name,
+  contact_person,
+  email,
+phone,
+  username
+FROM customers
+WHERE id = $1
                 `,
-                [id]
-            );
+        [id]
+      );
 
-        res.json(
-            result.rows[0]
-        );
+    res.json(
+      result.rows[0]
+    );
 
-    } catch (error) {
+  } catch (error) {
 
-        console.error(error);
+    console.error(error);
 
-        res.status(500).json({
-            message: "Server Error",
-        });
-    }
+    res.status(500).json({
+      message: "Server Error",
+    });
+  }
 });
 
 
