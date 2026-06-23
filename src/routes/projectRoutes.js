@@ -37,23 +37,29 @@ router.post("/", async (req, res) => {
             dispatch_status,
             po_number,
             project_value,
+            panel_type,
+            project_engineer,
+            completion_percentage,
         } = req.body;
 
         const result =
             await pool.query(
                 `
-        INSERT INTO projects
-        (
-          project_name,
-          customer_id,
-          status,
-          dispatch_status,
-          po_number,
-          project_value
-        )
-        VALUES
-        ($1,$2,$3,$4,$5,$6)
-        RETURNING *
+   INSERT INTO projects
+(
+  project_name,
+  customer_id,
+  status,
+  dispatch_status,
+  po_number,
+  project_value,
+  panel_type,
+  project_engineer,
+  completion_percentage
+)
+VALUES
+($1,$2,$3,$4,$5,$6,$7,$8,$9)
+RETURNING *
         `,
                 [
                     project_name,
@@ -62,6 +68,9 @@ router.post("/", async (req, res) => {
                     dispatch_status,
                     po_number,
                     project_value,
+                    panel_type,
+                    project_engineer,
+                    completion_percentage,
                 ]
             );
 
@@ -97,6 +106,9 @@ router.put("/:id", async (req, res) => {
             vehicle_number,
             dispatch_date,
             delivery_date,
+            panel_type,
+            project_engineer,
+            completion_percentage,
         } = req.body;
 
         const result =
@@ -115,8 +127,11 @@ router.put("/:id", async (req, res) => {
                     lr_number = $9,
                     vehicle_number = $10,
                     dispatch_date = $11,
-                    delivery_date = $12
-                WHERE id = $13
+                    delivery_date = $12,
+                    panel_type = $13,
+                    project_engineer = $14,
+                    completion_percentage = $15
+                WHERE id = $16
                 RETURNING *
                 `,
                 [
@@ -132,6 +147,9 @@ router.put("/:id", async (req, res) => {
                     vehicle_number,
                     dispatch_date,
                     delivery_date,
+                    panel_type,
+                    project_engineer,
+                    completion_percentage,
                     id,
                 ]
             );
