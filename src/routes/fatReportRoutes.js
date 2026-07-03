@@ -143,14 +143,10 @@ router.delete(
                     [req.params.id]
                 );
 
-            if (
-                report.rows.length > 0
-            ) {
-
-                fs.unlinkSync(
-                    report.rows[0].file_path
-                );
-
+            if (report.rows.length === 0) {
+                return res.status(404).json({
+                    message: "FAT Report not found",
+                });
             }
 
             await pool.query(
@@ -161,9 +157,24 @@ router.delete(
                 [req.params.id]
             );
 
+            try {
+
+                await deleteFile(
+                    "fat-reports",
+                    report.rows[0].file_path
+                );
+
+            } catch (err) {
+
+                console.error(
+                    "Supabase delete failed:",
+                    err
+                );
+
+            }
+
             res.json({
-                message:
-                    "FAT Report Deleted",
+                message: "FAT Report Deleted",
             });
 
         } catch (error) {
@@ -171,8 +182,7 @@ router.delete(
             console.error(error);
 
             res.status(500).json({
-                message:
-                    "Server Error",
+                message: "Server Error",
             });
 
         }
