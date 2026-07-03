@@ -7,59 +7,22 @@ const router =
 const multer =
     require("multer");
 
-const fs =
-    require("fs");
+
 
 const pool =
     require("../config/db");
 
-const storage =
-    multer.diskStorage({
+const {
+    uploadFile,
+    deleteFile,
+} = require("../utils/storage");
 
-        destination(
-            req,
-            file,
-            cb
-        ) {
 
-            const folder =
-                `uploads/gallery/project-${req.body.project_id}`;
 
-            fs.mkdirSync(
-                folder,
-                {
-                    recursive: true,
-                }
-            );
 
-            cb(
-                null,
-                folder
-            );
-
-        },
-
-        filename(
-            req,
-            file,
-            cb
-        ) {
-
-            cb(
-                null,
-                Date.now() +
-                "-" +
-                file.originalname
-            );
-
-        },
-
-    });
-
-const upload =
-    multer({
-        storage,
-    });
+const upload = multer({
+    storage: multer.memoryStorage(),
+});
 
 router.post(
     "/",
@@ -73,31 +36,54 @@ router.post(
                 caption,
             } = req.body;
 
-            const result =
-                await pool.query(
-                    `
-          INSERT INTO project_gallery
-          (
-            project_id,
-            image_name,
-            image_path,
-            caption
-          )
-          VALUES
-          ($1,$2,$3,$4)
-          RETURNING *
-          `,
-                    [
-                        project_id,
-                        req.file.originalname,
-                        req.file.path,
-                        caption,
-                    ]
+            const safeFileName =
+                req.file.originalname.replace(/[^\w.-]/g, "_");
+
+            const imagePath =
+                `project-${project_id}/${Date.now()}-${safeFileName}`;
+
+            await uploadFile(
+                "gallery",
+                imagePath,
+                req.file
+            );
+
+            try {
+
+                const result =
+                    await pool.query(
+                        `
+            INSERT INTO public.project_gallery
+            (
+                project_id,
+                image_name,
+                image_path,
+                caption
+            )
+            VALUES
+            ($1,$2,$3,$4)
+            RETURNING *
+            `,
+                        [
+                            project_id,
+                            safeFileName,
+                            imagePath,
+                            caption,
+                        ]
+                    );
+
+                res.json(result.rows[0]);
+
+            } catch (err) {
+
+                await deleteFile(
+                    "gallery",
+                    imagePath
                 );
 
-            res.json(
-                result.rows[0]
-            );
+                throw err;
+
+            }
 
         } catch (error) {
 
@@ -123,7 +109,7 @@ router.get(
                 await pool.query(
                     `
           SELECT *
-          FROM project_gallery
+          FROM public.project_gallery
           WHERE project_id = $1
           ORDER BY uploaded_at DESC
           `,
@@ -160,7 +146,7 @@ router.delete(
                 await pool.query(
                     `
           SELECT *
-          FROM project_gallery
+          FROM public.project_gallery
           WHERE id = $1
           `,
                     [req.params.id]
@@ -170,14 +156,26 @@ router.delete(
                 image.rows.length > 0
             ) {
 
-                if (
-                    fs.existsSync(
-                        image.rows[0].image_path
-                    )
-                ) {
+                await pool.query(
+                    `
+    DELETE FROM public.project_gallery
+    WHERE id = $1
+    `,
+                    [req.params.id]
+                );
 
-                    fs.unlinkSync(
+                try {
+
+                    await deleteFile(
+                        "gallery",
                         image.rows[0].image_path
+                    );
+
+                } catch (err) {
+
+                    console.error(
+                        "Gallery image delete failed:",
+                        err
                     );
 
                 }
@@ -186,7 +184,7 @@ router.delete(
 
             await pool.query(
                 `
-        DELETE FROM project_gallery
+        DELETE FROM public.project_gallery
         WHERE id = $1
         `,
                 [req.params.id]
