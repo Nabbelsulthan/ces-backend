@@ -1,41 +1,22 @@
 const express = require("express");
 const router = express.Router();
 const multer = require("multer");
-const fs = require("fs");
+
 
 const pool = require("../config/db");
 
-const storage = multer.diskStorage({
+const {
+    uploadFile,
+    deleteFile,
+} = require("../utils/storage");
 
-    destination(req, file, cb) {
 
-        const folder =
-            `uploads/fat-reports/project-${req.body.project_id}`;
 
-        fs.mkdirSync(folder, {
-            recursive: true,
-        });
 
-        cb(null, folder);
-    },
-
-    filename(req, file, cb) {
-
-        cb(
-            null,
-            Date.now() +
-            "-" +
-            file.originalname
-        );
-
-    },
-
+const upload = multer({
+    storage: multer.memoryStorage(),
 });
 
-const upload =
-    multer({
-        storage,
-    });
 
 router.post(
     "/",
@@ -48,29 +29,54 @@ router.post(
                 project_id,
             } = req.body;
 
-            const result =
-                await pool.query(
-                    `
-                    INSERT INTO fat_reports
-                    (
-                        project_id,
-                        report_name,
-                        file_path
-                    )
-                    VALUES
-                    ($1,$2,$3)
-                    RETURNING *
-                    `,
-                    [
-                        project_id,
-                        req.file.originalname,
-                        req.file.path,
-                    ]
+            const safeFileName =
+                req.file.originalname.replace(/[^\w.-]/g, "_");
+
+            const filePath =
+                `project-${project_id}/${Date.now()}-${safeFileName}`;
+
+            await uploadFile(
+                "fat-reports",
+                filePath,
+                req.file
+            );
+
+            try {
+
+                const result =
+                    await pool.query(
+                        `
+            INSERT INTO public.fat_reports
+            (
+                project_id,
+                report_name,
+                file_path
+            )
+            VALUES
+            ($1,$2,$3)
+            RETURNING *
+            `,
+                        [
+                            project_id,
+                            safeFileName,
+                            filePath,
+                        ]
+                    );
+
+                res.status(201).json(
+                    result.rows[0]
                 );
 
-            res.status(201).json(
-                result.rows[0]
-            );
+            } catch (err) {
+
+                await deleteFile(
+                    "fat-reports",
+                    filePath
+                );
+
+                throw err;
+
+            }
 
         } catch (error) {
 
@@ -96,7 +102,7 @@ router.get(
                 await pool.query(
                     `
                     SELECT *
-                    FROM fat_reports
+                    FROM public.fat_reports
                     WHERE project_id = $1
                     ORDER BY uploaded_at DESC
                     `,
@@ -131,7 +137,7 @@ router.delete(
                 await pool.query(
                     `
                     SELECT *
-                    FROM fat_reports
+                    FROM public.fat_reports
                     WHERE id = $1
                     `,
                     [req.params.id]
@@ -149,7 +155,7 @@ router.delete(
 
             await pool.query(
                 `
-                DELETE FROM fat_reports
+                DELETE FROM public.fat_reports
                 WHERE id = $1
                 `,
                 [req.params.id]
