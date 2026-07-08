@@ -41,4 +41,4 @@ function authenticateCustomer(req, res, next) {
 }
 
 module.exports =
-    authenticateCustomer;
+authenticateCustomer;
