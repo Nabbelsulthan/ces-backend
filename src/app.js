@@ -37,10 +37,10 @@ const galleryRoutes =
   // customer auth routes
 
   const customerProjects =
-require("./src/routes/customerProjects");
+require("./routes/customerProjects");
 
 const customerProjectDetails =
-require("./src/routes/customerProjectDetails");
+require("./routes/customerProjectDetails");
 
 const app = express();
 
