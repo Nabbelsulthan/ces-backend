@@ -2,8 +2,9 @@ const express = require("express");
 const router = express.Router();
 
 const pool = require("../config/db");
+const authenticateCustomer = require("../middleware/authenticateCustomer");
 
-router.get("/", async (req, res) => {
+router.get("/",authenticateCustomer, async (req, res) => {
     try {
         const result =
             await pool.query(`
@@ -169,7 +170,7 @@ router.put("/:id", async (req, res) => {
 });
 
 
-router.get("/:id", async (req, res) => {
+router.get("/:id", authenticateCustomer, async (req, res) => {
     try {
 
         const { id } = req.params;
