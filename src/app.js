@@ -34,6 +34,11 @@ const galleryRoutes =
     "./routes/galleryRoutes"
   );
 
+  // customer auth routes
+
+  const customerProjects =
+require("./src/routes/customerProjects");
+
 const app = express();
 
 const path =
@@ -102,6 +107,11 @@ app.use(
 app.use(
   "/api/gallery",
   galleryRoutes
+);
+
+app.use(
+  "/api/customer-projects",
+  customerProjects
 );
 
 const PORT =
