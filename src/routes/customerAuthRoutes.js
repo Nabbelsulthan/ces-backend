@@ -1,12 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const bcrypt = require("bcrypt");
-
+const jwt = require("jsonwebtoken");
 const pool = require("../config/db");
-
-
-
-
 
 router.post(
     "/login",
@@ -62,12 +58,22 @@ router.post(
 
             }
 
+            const token = jwt.sign(
+                {
+                    customerId: customer.id,
+                    username: customer.username,
+                },
+                process.env.JWT_SECRET,
+                {
+                    expiresIn: "7d",
+                }
+            );
+
             res.json({
                 success: true,
-                customerId:
-                    customer.id,
-                companyName:
-                    customer.company_name,
+                token,
+                customerId: customer.id,
+                companyName: customer.company_name,
             });
 
         } catch (error) {
