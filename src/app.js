@@ -39,6 +39,9 @@ const galleryRoutes =
   const customerProjects =
 require("./src/routes/customerProjects");
 
+const customerProjectDetails =
+require("./src/routes/customerProjectDetails");
+
 const app = express();
 
 const path =
@@ -108,10 +111,15 @@ app.use(
   "/api/gallery",
   galleryRoutes
 );
-
+// customer portal routes
 app.use(
   "/api/customer-projects",
   customerProjects
+);
+
+app.use(
+    "/api/customer/projects",
+    customerProjectDetails
 );
 
 const PORT =
