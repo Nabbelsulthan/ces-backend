@@ -1,78 +1,71 @@
 // customer portal routes
 
 
-
-
 const express = require("express");
 const router = express.Router();
 
 const pool = require("../config/db");
-// const authenticateCustomer = require("../middleware/authenticateCustomer");
 
-// router.get(
-//     "/",
-//     // authenticateCustomer,
-//     async (req, res) => {
+// Get all projects for a customer
+router.get("/customer/:customerId", async (req, res) => {
 
-//         try {
+    try {
 
-//             const result =
-//                 await pool.query(
-//                     `
-//                     SELECT
-//                         projects.*,
-//                         customers.company_name
-//                     FROM projects
-//                     LEFT JOIN customers
-//                     ON customers.id = projects.customer_id
-//                     WHERE projects.customer_id = $1
-//                     ORDER BY projects.id DESC
-//                     `,
-//                     [
-//                         req.customer.customerId,
-//                     ]
-//                 );
+        const { customerId } = req.params;
 
-//             res.json(result.rows);
+        const result = await pool.query(
+            `
+            SELECT
+                projects.*,
+                customers.company_name
+            FROM projects
+            LEFT JOIN customers
+            ON customers.id = projects.customer_id
+            WHERE projects.customer_id = $1
+            ORDER BY projects.id DESC
+            `,
+            [customerId]
+        );
 
-//         } catch (error) {
+        res.json(result.rows);
 
-//             console.error(error);
+    } catch (error) {
 
-//             res.status(500).json({
-//                 message: "Server Error",
-//             });
+        console.error(error);
 
-//         }
+        res.status(500).json({
+            message: "Server Error"
+        });
 
-//     }
-// );
+    }
+
+});
 
 
+// Get one project
 router.get("/:id", async (req, res) => {
 
     try {
 
         const { id } = req.params;
 
-        const result =
-            await pool.query(
-                `
-                SELECT
-                    projects.*,
-                    customers.company_name
-                FROM projects
-                LEFT JOIN customers
-                ON customers.id = projects.customer_id
-                WHERE projects.id = $1
-                `,
-                [id]
-            );
+        const result = await pool.query(
+            `
+            SELECT
+                projects.*,
+                customers.company_name
+            FROM projects
+            LEFT JOIN customers
+            ON customers.id = projects.customer_id
+            WHERE projects.id = $1
+            `,
+            [id]
+        );
 
         if (result.rows.length === 0) {
 
             return res.status(404).json({
-                message: "Project not found",
+                message: "Project not found"
             });
 
         }
@@ -84,11 +77,12 @@ router.get("/:id", async (req, res) => {
         console.error(error);
 
         res.status(500).json({
-            message: "Server Error",
+            message: "Server Error"
         });
 
     }
 
 });
 
+module.exports = router;
 module.exports = router;
