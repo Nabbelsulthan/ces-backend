@@ -5,11 +5,11 @@ const express = require("express");
 const router = express.Router();
 
 const pool = require("../config/db");
-const authenticateCustomer = require("../middleware/authenticateCustomer");
+// const authenticateCustomer = require("../middleware/authenticateCustomer");
 
 router.get(
     "/:id",
-    authenticateCustomer,
+  
     async (req, res) => {
 
         try {

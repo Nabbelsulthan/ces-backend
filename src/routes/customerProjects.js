@@ -7,11 +7,11 @@ const express = require("express");
 const router = express.Router();
 
 const pool = require("../config/db");
-const authenticateCustomer = require("../middleware/authenticateCustomer");
+// const authenticateCustomer = require("../middleware/authenticateCustomer");
 
 router.get(
     "/",
-    authenticateCustomer,
+    // authenticateCustomer,
     async (req, res) => {
 
         try {
