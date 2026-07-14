@@ -42,6 +42,9 @@ const customerProjects =
 const departmentRoutes =
   require("./routes/hr/departmentRoutes");
 
+const designationRoutes =
+  require("./routes/hr/designationRoutes");
+
 // const customerProjectDetails =
 // require("./routes/customerProjectDetails");
 
@@ -123,6 +126,11 @@ app.use(
 app.use(
   "/api/departments",
   departmentRoutes
+);
+
+app.use(
+  "/api/designations",
+  designationRoutes
 );
 
 // app.use(
