@@ -34,10 +34,13 @@ const galleryRoutes =
     "./routes/galleryRoutes"
   );
 
-  // customer auth routes
+// customer auth routes
 
-  const customerProjects =
-require("./routes/customerProjects");
+const customerProjects =
+  require("./routes/customerProjects");
+
+const departmentRoutes =
+  require("./routes/hr/departmentRoutes");
 
 // const customerProjectDetails =
 // require("./routes/customerProjectDetails");
@@ -115,6 +118,11 @@ app.use(
 app.use(
   "/api/customer-projects",
   customerProjects
+);
+
+app.use(
+  "/api/departments",
+  departmentRoutes
 );
 
 // app.use(
