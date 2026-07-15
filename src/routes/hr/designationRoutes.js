@@ -3,16 +3,15 @@ const express = require("express");
 const router = express.Router();
 
 const designationController =
-require("../../controllers/hr/designationController");
+    require("../../controllers/hr/designationController");
+
+router.get("/", designationController.getDesignations);
 
 router.get(
-    "/",
-    designationController.getDesignations
+    "/department/:departmentId",
+    designationController.getDesignationsByDepartment
 );
 
-router.post(
-    "/",
-    designationController.createDesignation
-);
+router.post("/", designationController.createDesignation);
 
 module.exports = router;

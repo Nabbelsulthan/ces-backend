@@ -38,10 +38,28 @@ const createDesignation = async (designation) => {
     return data;
 };
 
+const getDesignationsByDepartment = async (departmentId) => {
+
+    const { data, error } = await supabase
+        .from("designations")
+        .select("*")
+        .eq("department_id", departmentId)
+        .eq("status", true)
+        .order("designation_name");
+
+    if (error) throw error;
+
+    return data;
+};
+
 module.exports = {
 
     getDesignations,
 
-    createDesignation
+    createDesignation,
+
+    getDesignationsByDepartment
+
+
 
 };

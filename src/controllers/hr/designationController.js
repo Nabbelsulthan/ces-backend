@@ -1,5 +1,5 @@
 const designationService =
-require("../../services/hr/designationService");
+    require("../../services/hr/designationService");
 
 // GET
 const getDesignations = async (req, res) => {
@@ -65,10 +65,38 @@ const createDesignation = async (req, res) => {
 
 };
 
+
+const getDesignationsByDepartment = async (req, res) => {
+
+    try {
+
+        const data =
+            await designationService.getDesignationsByDepartment(
+                req.params.departmentId
+            );
+
+        res.json({
+            success: true,
+            data
+        });
+
+    } catch (error) {
+
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+
+    }
+
+};
+
 module.exports = {
 
     getDesignations,
 
-    createDesignation
+    createDesignation,
+
+    getDesignationsByDepartment
 
 };
