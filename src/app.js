@@ -48,6 +48,9 @@ const designationRoutes =
 const employeeRoutes =
   require("./routes/hr/employeeRoutes");
 
+const attendanceRoutes =
+  require("./routes/hr/attendanceRoutes");
+
 // const customerProjectDetails =
 // require("./routes/customerProjectDetails");
 
@@ -140,6 +143,11 @@ app.use(
 app.use(
   "/api/employees",
   employeeRoutes
+);
+
+app.use(
+  "/api/attendance",
+  attendanceRoutes
 );
 
 
