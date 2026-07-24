@@ -170,39 +170,39 @@ router.put("/:id", async (req, res) => {
 });
 
 
-// router.get("/:id", async (req, res) => {
-//     try {
+router.get("/:id", async (req, res) => {
+    try {
 
-//         const { id } = req.params;
+        const { id } = req.params;
 
-//         const result =
-//             await pool.query(
-//                 `
-//                 SELECT
-//                     projects.*,
-//                     customers.company_name
-//                 FROM projects
-//                 LEFT JOIN customers
-//                 ON projects.customer_id =
-//                    customers.id
-//                 WHERE projects.id = $1
-//                 `,
-//                 [id]
-//             );
+        const result =
+            await pool.query(
+                `
+                SELECT
+                    projects.*,
+                    customers.company_name
+                FROM projects
+                LEFT JOIN customers
+                ON projects.customer_id =
+                   customers.id
+                WHERE projects.id = $1
+                `,
+                [id]
+            );
 
-//         res.json(
-//             result.rows[0]
-//         );
+        res.json(
+            result.rows[0]
+        );
 
-//     } catch (error) {
+    } catch (error) {
 
-//         console.error(error);
+        console.error(error);
 
-//         res.status(500).json({
-//             message: "Server Error",
-//         });
-//     }
-// });
+        res.status(500).json({
+            message: "Server Error",
+        });
+    }
+});
 
 
 
