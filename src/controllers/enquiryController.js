@@ -1,5 +1,14 @@
 const supabase = require("../config/supabase");
 
+const {
+    sendEnquiryEmail,
+} = require("../services/emailService");
+
+
+/* =========================================================
+   SUBMIT CUSTOMER ENQUIRY
+   Quote + Contact Us
+   ========================================================= */
 
 const submitEnquiry = async (req, res) => {
 
@@ -19,9 +28,9 @@ const submitEnquiry = async (req, res) => {
         } = req.body;
 
 
-        /* ==========================================
+        /* =====================================================
            ENQUIRY TYPE
-           ========================================== */
+           ===================================================== */
 
         if (
             !enquiry_type ||
@@ -29,51 +38,91 @@ const submitEnquiry = async (req, res) => {
         ) {
 
             return res.status(400).json({
+
                 success: false,
-                message: "Invalid enquiry type.",
+
+                message:
+                    "Invalid enquiry type.",
+
             });
 
         }
 
 
-        /* ==========================================
+        /* =====================================================
            NAME
-           ========================================== */
+           ===================================================== */
 
         if (
             !name ||
+            typeof name !== "string" ||
             name.trim().length < 2 ||
             name.trim().length > 80
         ) {
 
             return res.status(400).json({
+
                 success: false,
-                message: "Please provide a valid name.",
+
+                message:
+                    "Please provide a valid name.",
+
             });
 
         }
 
 
-        /* ==========================================
-           EMAIL
-           ========================================== */
+        /* =====================================================
+           COMPANY
+           ===================================================== */
 
         if (
-            !email ||
-            !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+            company &&
+            (
+                typeof company !== "string" ||
+                company.trim().length > 120
+            )
         ) {
 
             return res.status(400).json({
+
                 success: false,
-                message: "Please provide a valid email.",
+
+                message:
+                    "Company name is too long.",
+
             });
 
         }
 
 
-        /* ==========================================
+        /* =====================================================
+           EMAIL
+           ===================================================== */
+
+        if (
+            !email ||
+            typeof email !== "string" ||
+            !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+                email.trim()
+            )
+        ) {
+
+            return res.status(400).json({
+
+                success: false,
+
+                message:
+                    "Please provide a valid email.",
+
+            });
+
+        }
+
+
+        /* =====================================================
            PHONE
-           ========================================== */
+           ===================================================== */
 
         const normalizedPhone =
             String(phone || "")
@@ -87,50 +136,107 @@ const submitEnquiry = async (req, res) => {
         ) {
 
             return res.status(400).json({
+
                 success: false,
+
                 message:
                     "Please provide a valid Indian mobile number.",
+
             });
 
         }
 
 
-        /* ==========================================
-           REQUIREMENT
-           ========================================== */
+        /* =====================================================
+           LOCATION
+           ===================================================== */
+
+        if (
+            location &&
+            (
+                typeof location !== "string" ||
+                location.trim().length > 100
+            )
+        ) {
+
+            return res.status(400).json({
+
+                success: false,
+
+                message:
+                    "Location is too long.",
+
+            });
+
+        }
+
+
+        /* =====================================================
+           CUSTOMER REQUIREMENT
+           ===================================================== */
 
         if (
             !message ||
-            message.trim().length === 0 ||
+            typeof message !== "string" ||
+            message.trim().length === 0
+        ) {
+
+            return res.status(400).json({
+
+                success: false,
+
+                message:
+                    "Please provide your requirement.",
+
+            });
+
+        }
+
+
+        if (
             message.trim().length > 1500
         ) {
 
             return res.status(400).json({
+
                 success: false,
+
                 message:
-                    "Please provide your requirement.",
+                    "Your requirement must be 1500 characters or less.",
+
             });
 
         }
 
 
-        /* ==========================================
+        /* =====================================================
            QUOTE-SPECIFIC VALIDATION
-           ========================================== */
+           ===================================================== */
 
         if (
             enquiry_type === "quote" &&
-            !panel_type
+            (
+                !panel_type ||
+                typeof panel_type !== "string" ||
+                panel_type.trim().length === 0
+            )
         ) {
 
             return res.status(400).json({
+
                 success: false,
+
                 message:
                     "Please select a panel or solution.",
+
             });
 
         }
 
+
+        /* =====================================================
+           QUANTITY
+           ===================================================== */
 
         let normalizedQuantity = null;
 
@@ -142,18 +248,25 @@ const submitEnquiry = async (req, res) => {
             quantity !== ""
         ) {
 
-            normalizedQuantity = Number(quantity);
+            normalizedQuantity =
+                Number(quantity);
 
 
             if (
-                !Number.isInteger(normalizedQuantity) ||
+                !Number.isInteger(
+                    normalizedQuantity
+                ) ||
                 normalizedQuantity < 1 ||
                 normalizedQuantity > 9999
             ) {
 
                 return res.status(400).json({
+
                     success: false,
-                    message: "Invalid quantity.",
+
+                    message:
+                        "Please provide a valid quantity.",
+
                 });
 
             }
@@ -161,50 +274,94 @@ const submitEnquiry = async (req, res) => {
         }
 
 
-        /* ==========================================
-           INSERT INTO SUPABASE
-           ========================================== */
+        /* =====================================================
+           TIMELINE
+           ===================================================== */
 
-        const { data, error } = await supabase
-            .from("enquiries")
-            .insert({
+        if (
+            timeline &&
+            (
+                typeof timeline !== "string" ||
+                timeline.trim().length > 50
+            )
+        ) {
 
-                enquiry_type,
+            return res.status(400).json({
 
-                status: "new",
-
-                name: name.trim(),
-
-                company:
-                    company?.trim() || null,
-
-                email:
-                    email.trim().toLowerCase(),
-
-                phone:
-                    normalizedPhone,
-
-                location:
-                    location?.trim() || null,
-
-                panel_type:
-                    panel_type || null,
-
-                quantity:
-                    normalizedQuantity,
-
-                timeline:
-                    timeline || null,
+                success: false,
 
                 message:
-                    message.trim(),
+                    "Timeline value is too long.",
 
-                source: "website",
+            });
 
-            })
+        }
+
+
+        /* =====================================================
+           PREPARE DATA
+           ===================================================== */
+
+        const enquiryData = {
+
+            enquiry_type,
+
+            status: "new",
+
+            name:
+                name.trim(),
+
+            company:
+                company?.trim() || null,
+
+            email:
+                email.trim().toLowerCase(),
+
+            phone:
+                normalizedPhone,
+
+            location:
+                location?.trim() || null,
+
+            panel_type:
+                panel_type?.trim() || null,
+
+            quantity:
+                normalizedQuantity,
+
+            timeline:
+                timeline?.trim() || null,
+
+            message:
+                message.trim(),
+
+            source:
+                "website",
+
+        };
+
+
+        /* =====================================================
+           SAVE TO SUPABASE
+           ===================================================== */
+
+        const {
+            data,
+            error,
+        } = await supabase
+
+            .from("enquiries")
+
+            .insert(enquiryData)
+
             .select()
+
             .single();
 
+
+        /* =====================================================
+           SUPABASE ERROR
+           ===================================================== */
 
         if (error) {
 
@@ -213,18 +370,52 @@ const submitEnquiry = async (req, res) => {
                 error
             );
 
+
             return res.status(500).json({
+
                 success: false,
+
                 message:
                     "Unable to save your enquiry.",
+
             });
 
         }
 
 
-        /* ==========================================
-           SUCCESS
-           ========================================== */
+        /* =====================================================
+           SEND EMAIL NOTIFICATION
+           ===================================================== */
+
+        try {
+
+            await sendEnquiryEmail(data);
+
+            console.log(
+                `Enquiry email sent successfully for ${data.id}`
+            );
+
+        } catch (emailError) {
+
+            /*
+             * The enquiry is already safely stored
+             * in Supabase.
+             *
+             * Therefore an email failure should NOT
+             * make the customer's submission fail.
+             */
+
+            console.error(
+                "Enquiry email failed:",
+                emailError
+            );
+
+        }
+
+
+        /* =====================================================
+           SUCCESS RESPONSE
+           ===================================================== */
 
         return res.status(201).json({
 
@@ -235,9 +426,11 @@ const submitEnquiry = async (req, res) => {
 
             data: {
 
-                id: data.id,
+                id:
+                    data.id,
 
-                status: data.status,
+                status:
+                    data.status,
 
             },
 
@@ -246,10 +439,15 @@ const submitEnquiry = async (req, res) => {
 
     } catch (error) {
 
+        /* =====================================================
+           UNEXPECTED ERROR
+           ===================================================== */
+
         console.error(
             "Submit enquiry error:",
             error
         );
+
 
         return res.status(500).json({
 
@@ -265,6 +463,12 @@ const submitEnquiry = async (req, res) => {
 };
 
 
+/* =========================================================
+   EXPORT
+   ========================================================= */
+
 module.exports = {
+
     submitEnquiry,
+
 };
