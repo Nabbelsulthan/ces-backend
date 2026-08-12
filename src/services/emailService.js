@@ -1,41 +1,33 @@
-const nodemailer = require("nodemailer");
+const { Resend } = require("resend");
 
 
 /* =========================================================
-   ZOHO SMTP TRANSPORTER
+   RESEND
    ========================================================= */
 
-const transporter = nodemailer.createTransport({
+const resend = new Resend(
+    process.env.RESEND_API_KEY
+);
 
-    host: process.env.EMAIL_HOST,
 
-    port:
-        Number(process.env.EMAIL_PORT) || 465,
+/* =========================================================
+   HTML ESCAPE
+   Prevent customer-entered text from becoming HTML.
+   ========================================================= */
 
-    secure:
-        process.env.EMAIL_SECURE === "true",
+const escapeHtml = (value) => {
 
-    auth: {
+    if (value === null || value === undefined) {
+        return "";
+    }
 
-        user:
-            process.env.EMAIL_USER,
-
-        pass:
-            process.env.EMAIL_PASSWORD,
-
-    },
-
-    /*
-     * Prevent SMTP from hanging indefinitely.
-     */
-
-    connectionTimeout: 10000,
-
-    greetingTimeout: 10000,
-
-    socketTimeout: 15000,
-
-});
+    return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+};
 
 
 /* =========================================================
@@ -48,324 +40,578 @@ const sendEnquiryEmail = async (enquiry) => {
         enquiry.enquiry_type === "quote";
 
 
-    const enquiryTitle =
+    const enquiryType =
         isQuote
-            ? "Engineering Quote Enquiry"
-            : "Website Contact Enquiry";
+            ? "Quote Request"
+            : "Contact Enquiry";
 
 
     const subject =
-        `CES — ${enquiryTitle} — ${enquiry.name}`;
+        isQuote
+            ? `New Quote Request — ${enquiry.name}`
+            : `New Contact Enquiry — ${enquiry.name}`;
 
+
+    /* =====================================================
+       CUSTOMER DATA
+       ===================================================== */
+
+    const name =
+        escapeHtml(enquiry.name);
+
+    const company =
+        escapeHtml(
+            enquiry.company || "Not provided"
+        );
+
+    const email =
+        escapeHtml(enquiry.email);
+
+    const phone =
+        escapeHtml(enquiry.phone);
+
+    const location =
+        escapeHtml(
+            enquiry.location || "Not provided"
+        );
+
+    const panelType =
+        escapeHtml(
+            enquiry.panel_type || "Not specified"
+        );
+
+    const quantity =
+        escapeHtml(
+            enquiry.quantity || "Not specified"
+        );
+
+    const timeline =
+        escapeHtml(
+            enquiry.timeline || "Not specified"
+        );
+
+    const message =
+        escapeHtml(enquiry.message);
+
+
+    /* =====================================================
+       QUOTE DETAILS
+       ===================================================== */
+
+    const quoteDetails = isQuote
+        ? `
+
+            <div style="
+                margin-top: 28px;
+                padding-top: 24px;
+                border-top: 1px solid #e6ece8;
+            ">
+
+                <h3 style="
+                    margin: 0 0 18px;
+                    color: #162537;
+                    font-size: 18px;
+                ">
+                    Project Details
+                </h3>
+
+
+                <table style="
+                    width: 100%;
+                    border-collapse: collapse;
+                ">
+
+                    <tr>
+
+                        <td style="
+                            padding: 9px 0;
+                            color: #62748a;
+                            width: 42%;
+                        ">
+                            Panel / Solution
+                        </td>
+
+                        <td style="
+                            padding: 9px 0;
+                            color: #162537;
+                            font-weight: 600;
+                        ">
+                            ${panelType}
+                        </td>
+
+                    </tr>
+
+
+                    <tr>
+
+                        <td style="
+                            padding: 9px 0;
+                            color: #62748a;
+                        ">
+                            Quantity
+                        </td>
+
+                        <td style="
+                            padding: 9px 0;
+                            color: #162537;
+                            font-weight: 600;
+                        ">
+                            ${quantity}
+                        </td>
+
+                    </tr>
+
+
+                    <tr>
+
+                        <td style="
+                            padding: 9px 0;
+                            color: #62748a;
+                        ">
+                            Timeline
+                        </td>
+
+                        <td style="
+                            padding: 9px 0;
+                            color: #162537;
+                            font-weight: 600;
+                        ">
+                            ${timeline}
+                        </td>
+
+                    </tr>
+
+                </table>
+
+            </div>
+
+        `
+        : "";
+
+
+    /* =====================================================
+       EMAIL HTML
+       ===================================================== */
 
     const html = `
 
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>
+        ${enquiryType}
+    </title>
+
+</head>
+
+
+<body style="
+    margin: 0;
+    padding: 30px 15px;
+    background: #f5f8f6;
+    font-family:
+        Arial,
+        Helvetica,
+        sans-serif;
+    color: #162537;
+">
+
+
+<div style="
+    max-width: 700px;
+    margin: 0 auto;
+">
+
+
+    <!-- =================================================
+         HEADER
+         ================================================= -->
+
+    <div style="
+        background: #58b947;
+        padding: 30px;
+        border-radius: 18px 18px 0 0;
+        color: #ffffff;
+    ">
+
         <div style="
-            font-family:
-                Arial,
-                Helvetica,
-                sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        ">
+            Circuits Energy System
+        </div>
 
-            max-width: 700px;
 
-            margin: 0 auto;
+        <div style="
+            font-size: 14px;
+            opacity: 0.95;
+        ">
+            ${enquiryType}
+        </div>
 
-            color: #162537;
+    </div>
 
-            background: #ffffff;
+
+    <!-- =================================================
+         MAIN
+         ================================================= -->
+
+    <div style="
+        background: #ffffff;
+        padding: 32px;
+        border: 1px solid #e6ece8;
+        border-top: none;
+    ">
+
+
+        <div style="
+            display: inline-block;
+            padding: 7px 12px;
+            background: #eaf8e7;
+            color: #469a39;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 700;
+            margin-bottom: 22px;
         ">
 
-            <!-- HEADER -->
+            NEW WEBSITE ENQUIRY
 
-            <div style="
-                background: #58B947;
+        </div>
 
-                padding:
-                    28px 30px;
 
-                border-radius:
-                    14px 14px 0 0;
+        <h2 style="
+            margin: 0 0 24px;
+            color: #162537;
+            font-size: 24px;
+        ">
 
-                color: #ffffff;
-            ">
+            ${name} has submitted
+            ${isQuote ? "a quote request" : "an enquiry"}.
 
-                <h2 style="
-                    margin: 0;
+        </h2>
 
-                    font-size: 24px;
-                ">
 
-                    Circuits Energy System
+        <!-- =================================================
+             CUSTOMER INFORMATION
+             ================================================= -->
 
-                </h2>
+        <h3 style="
+            margin: 0 0 16px;
+            color: #162537;
+            font-size: 18px;
+        ">
 
+            Customer Information
 
-                <p style="
-                    margin:
-                        8px 0 0;
+        </h3>
 
-                    font-size: 14px;
-                ">
 
-                    ${enquiryTitle}
+        <table style="
+            width: 100%;
+            border-collapse: collapse;
+            background: #f7faf8;
+            border-radius: 12px;
+        ">
 
-                </p>
 
-            </div>
+            <tr>
 
-
-            <!-- CONTENT -->
-
-            <div style="
-                background: #f7faf8;
-
-                padding: 30px;
-            ">
-
-
-                <h3 style="
-                    margin-top: 0;
-                ">
-
-                    Customer Details
-
-                </h3>
-
-
-                <p>
-
-                    <strong>
-                        Name:
-                    </strong>
-
-                    ${enquiry.name}
-
-                </p>
-
-
-                <p>
-
-                    <strong>
-                        Company:
-                    </strong>
-
-                    ${enquiry.company || "Not provided"}
-
-                </p>
-
-
-                <p>
-
-                    <strong>
-                        Email:
-                    </strong>
-
-                    ${enquiry.email}
-
-                </p>
-
-
-                <p>
-
-                    <strong>
-                        Phone:
-                    </strong>
-
-                    ${enquiry.phone}
-
-                </p>
-
-
-                <p>
-
-                    <strong>
-                        Location:
-                    </strong>
-
-                    ${enquiry.location || "Not provided"}
-
-                </p>
-
-
-                ${
-                    isQuote
-                        ? `
-
-                            <hr style="
-                                border: none;
-
-                                border-top:
-                                    1px solid #dfe8e2;
-
-                                margin:
-                                    25px 0;
-                            ">
-
-
-                            <h3>
-                                Project Details
-                            </h3>
-
-
-                            <p>
-
-                                <strong>
-                                    Panel / Solution:
-                                </strong>
-
-                                ${
-                                    enquiry.panel_type ||
-                                    "Not specified"
-                                }
-
-                            </p>
-
-
-                            <p>
-
-                                <strong>
-                                    Quantity:
-                                </strong>
-
-                                ${
-                                    enquiry.quantity ||
-                                    "Not specified"
-                                }
-
-                            </p>
-
-
-                            <p>
-
-                                <strong>
-                                    Timeline:
-                                </strong>
-
-                                ${
-                                    enquiry.timeline ||
-                                    "Not specified"
-                                }
-
-                            </p>
-
-                        `
-                        : ""
-                }
-
-
-                <hr style="
-                    border: none;
-
-                    border-top:
-                        1px solid #dfe8e2;
-
-                    margin:
-                        25px 0;
-                ">
-
-
-                <h3>
-                    Customer Requirement
-                </h3>
-
-
-                <div style="
-                    background: #ffffff;
-
-                    border:
-                        1px solid #e6ece8;
-
-                    border-radius: 10px;
-
-                    padding: 20px;
-
-                    line-height: 1.7;
-
-                    white-space: pre-wrap;
-                ">
-
-                    ${enquiry.message}
-
-                </div>
-
-
-                <p style="
-                    margin-top: 25px;
-
+                <td style="
+                    padding: 12px 15px;
                     color: #62748a;
-
-                    font-size: 13px;
+                    width: 35%;
                 ">
+                    Name
+                </td>
 
-                    Submitted through:
-                    ${enquiry.source || "CES Website"}
+                <td style="
+                    padding: 12px 15px;
+                    font-weight: 600;
+                    color: #162537;
+                ">
+                    ${name}
+                </td>
 
-                </p>
-
-            </div>
+            </tr>
 
 
-            <!-- FOOTER -->
+            <tr>
 
-            <div style="
-                padding:
-                    18px 30px;
+                <td style="
+                    padding: 12px 15px;
+                    color: #62748a;
+                ">
+                    Company
+                </td>
 
-                background:
-                    #162537;
+                <td style="
+                    padding: 12px 15px;
+                    font-weight: 600;
+                    color: #162537;
+                ">
+                    ${company}
+                </td>
 
-                color:
-                    #ffffff;
+            </tr>
 
-                font-size:
-                    12px;
+
+            <tr>
+
+                <td style="
+                    padding: 12px 15px;
+                    color: #62748a;
+                ">
+                    Email
+                </td>
+
+                <td style="
+                    padding: 12px 15px;
+                    font-weight: 600;
+                    color: #162537;
+                ">
+                    ${email}
+                </td>
+
+            </tr>
+
+
+            <tr>
+
+                <td style="
+                    padding: 12px 15px;
+                    color: #62748a;
+                ">
+                    Phone
+                </td>
+
+                <td style="
+                    padding: 12px 15px;
+                    font-weight: 600;
+                    color: #162537;
+                ">
+                    ${phone}
+                </td>
+
+            </tr>
+
+
+            <tr>
+
+                <td style="
+                    padding: 12px 15px;
+                    color: #62748a;
+                ">
+                    Location
+                </td>
+
+                <td style="
+                    padding: 12px 15px;
+                    font-weight: 600;
+                    color: #162537;
+                ">
+                    ${location}
+                </td>
+
+            </tr>
+
+
+        </table>
+
+
+        ${quoteDetails}
+
+
+        <!-- =================================================
+             REQUIREMENT
+             ================================================= -->
+
+        <div style="
+            margin-top: 28px;
+            padding-top: 24px;
+            border-top: 1px solid #e6ece8;
+        ">
+
+            <h3 style="
+                margin: 0 0 14px;
+                color: #162537;
+                font-size: 18px;
             ">
 
-                CES Website Enquiry System
+                Customer Requirement
+
+            </h3>
+
+
+            <div style="
+                padding: 18px;
+                background: #f7faf8;
+                border-left: 4px solid #58b947;
+                border-radius: 8px;
+                color: #62748a;
+                font-size: 15px;
+                line-height: 1.7;
+                white-space: pre-wrap;
+            ">
+
+                ${message}
 
             </div>
 
         </div>
 
-    `;
+
+        <!-- =================================================
+             ACTION
+             ================================================= -->
+
+        <div style="
+            margin-top: 28px;
+            padding: 18px;
+            background: #f5fbf4;
+            border: 1px solid #cfe8c9;
+            border-radius: 12px;
+        ">
+
+            <strong style="
+                color: #347d2b;
+            ">
+
+                Action Required
+
+            </strong>
 
 
-    const mailOptions = {
+            <p style="
+                margin: 7px 0 0;
+                color: #62748a;
+                line-height: 1.6;
+            ">
 
-        from:
-            `"CES Website" <${process.env.EMAIL_USER}>`,
+                Please review this enquiry and contact
+                the customer as soon as possible.
 
-        to:
-            process.env.ENQUIRY_EMAIL,
+            </p>
 
-        replyTo:
-            enquiry.email,
+        </div>
 
-        subject,
 
-        html,
+    </div>
 
-    };
 
+    <!-- =================================================
+         FOOTER
+         ================================================= -->
+
+    <div style="
+        padding: 22px 30px;
+        background: #162537;
+        border-radius: 0 0 18px 18px;
+        color: #ffffff;
+        text-align: center;
+    ">
+
+        <div style="
+            font-size: 13px;
+            opacity: 0.9;
+        ">
+
+            Circuits Energy System Pvt. Ltd.
+
+        </div>
+
+
+        <div style="
+            margin-top: 6px;
+            font-size: 12px;
+            opacity: 0.65;
+        ">
+
+            Website Enquiry Notification
+
+        </div>
+
+    </div>
+
+
+</div>
+
+
+</body>
+
+</html>
+
+`;
+
+
+    /* =====================================================
+       SEND THROUGH RESEND
+       ===================================================== */
 
     console.log(
-        "Connecting to Zoho SMTP..."
+        "Sending enquiry email through Resend..."
     );
 
 
-    const info =
-        await transporter.sendMail(
-            mailOptions
+    const { data, error } =
+        await resend.emails.send({
+
+            from:
+                "CES Website <design@circuitses.com>",
+
+            to: [
+                process.env.ENQUIRY_EMAIL
+            ],
+
+            replyTo:
+                enquiry.email,
+
+            subject,
+
+            html,
+
+        });
+
+
+    /* =====================================================
+       RESEND ERROR
+       ===================================================== */
+
+    if (error) {
+
+        console.error(
+            "Resend enquiry email error:",
+            error
         );
 
+        throw new Error(
+            error.message ||
+            "Failed to send enquiry email."
+        );
+
+    }
+
+
+    /* =====================================================
+       SUCCESS
+       ===================================================== */
 
     console.log(
-        "Zoho email sent:",
-        info.messageId
+        "Enquiry email sent successfully:",
+        data?.id
     );
 
 
-    return info;
+    return data;
 
 };
 
@@ -375,7 +621,5 @@ const sendEnquiryEmail = async (enquiry) => {
    ========================================================= */
 
 module.exports = {
-
     sendEnquiryEmail,
-
 };

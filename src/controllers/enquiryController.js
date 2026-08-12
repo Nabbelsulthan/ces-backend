@@ -5,6 +5,7 @@ const {
 } = require("../services/emailService");
 
 
+
 /* =========================================================
    SUBMIT CUSTOMER ENQUIRY
    Quote + Contact Us
@@ -387,31 +388,6 @@ const submitEnquiry = async (req, res) => {
            SEND EMAIL NOTIFICATION
            ===================================================== */
 
-        // try {
-
-        //     await sendEnquiryEmail(data);
-
-        //     console.log(
-        //         `Enquiry email sent successfully for ${data.id}`
-        //     );
-
-        // } catch (emailError) {
-
-        //     /*
-        //      * The enquiry is already safely stored
-        //      * in Supabase.
-        //      *
-        //      * Therefore an email failure should NOT
-        //      * make the customer's submission fail.
-        //      */
-
-        //     console.error(
-        //         "Enquiry email failed:",
-        //         emailError
-        //     );
-
-        // }
-
 
         sendEnquiryEmail(data)
             .then(() => {
@@ -429,6 +405,24 @@ const submitEnquiry = async (req, res) => {
                 );
 
             });
+
+
+        return res.status(201).json({
+
+            success: true,
+
+            message:
+                "Your enquiry has been received successfully.",
+
+            data: {
+
+                id: data.id,
+
+                status: data.status,
+
+            },
+
+        });
 
         /* =====================================================
            SUCCESS RESPONSE
