@@ -387,31 +387,48 @@ const submitEnquiry = async (req, res) => {
            SEND EMAIL NOTIFICATION
            ===================================================== */
 
-        try {
+        // try {
 
-            await sendEnquiryEmail(data);
+        //     await sendEnquiryEmail(data);
 
-            console.log(
-                `Enquiry email sent successfully for ${data.id}`
-            );
+        //     console.log(
+        //         `Enquiry email sent successfully for ${data.id}`
+        //     );
 
-        } catch (emailError) {
+        // } catch (emailError) {
 
-            /*
-             * The enquiry is already safely stored
-             * in Supabase.
-             *
-             * Therefore an email failure should NOT
-             * make the customer's submission fail.
-             */
+        //     /*
+        //      * The enquiry is already safely stored
+        //      * in Supabase.
+        //      *
+        //      * Therefore an email failure should NOT
+        //      * make the customer's submission fail.
+        //      */
 
-            console.error(
-                "Enquiry email failed:",
-                emailError
-            );
+        //     console.error(
+        //         "Enquiry email failed:",
+        //         emailError
+        //     );
 
-        }
+        // }
 
+
+        sendEnquiryEmail(data)
+            .then(() => {
+
+                console.log(
+                    `Enquiry email sent successfully for ${data.id}`
+                );
+
+            })
+            .catch((emailError) => {
+
+                console.error(
+                    `Enquiry email failed for ${data.id}:`,
+                    emailError
+                );
+
+            });
 
         /* =====================================================
            SUCCESS RESPONSE
