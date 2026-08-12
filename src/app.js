@@ -1,3 +1,5 @@
+
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 
@@ -50,6 +52,9 @@ const employeeRoutes =
 
 const attendanceRoutes =
   require("./routes/hr/attendanceRoutes");
+
+const enquiryRoutes =
+  require("./routes/enquiryRoutes");
 
 // const customerProjectDetails =
 // require("./routes/customerProjectDetails");
@@ -148,6 +153,11 @@ app.use(
 app.use(
   "/api/attendance",
   attendanceRoutes
+);
+
+app.use(
+  "/api/enquiries",
+  enquiryRoutes
 );
 
 
