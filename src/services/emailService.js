@@ -566,7 +566,7 @@ const sendEnquiryEmail = async (enquiry) => {
         await resend.emails.send({
 
             from:
-                "CES Website <design@circuitses.com>",
+                "CES Website <info@circuitses.com>",
 
             to: [
                 process.env.ENQUIRY_EMAIL
