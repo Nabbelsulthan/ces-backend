@@ -569,7 +569,8 @@ const sendEnquiryEmail = async (enquiry) => {
                 "CES Website <info@circuitses.com>",
 
             to: [
-                process.env.ENQUIRY_EMAIL
+                // process.env.ENQUIRY_EMAIL
+                "info@circuitses.com"
             ],
 
             replyTo:
