@@ -70,9 +70,22 @@ router.post(
                 }
             );
 
+            const realtimeToken = jwt.sign(
+                {
+                    customerId: customer.id,
+                    username: customer.username,
+                    role: "authenticated",
+                },
+                process.env.SUPABASE_JWT_SECRET,
+                {
+                    expiresIn: "7d",
+                }
+            );
+
             res.json({
                 success: true,
                 token,
+                realtimeToken,
                 customerId: customer.id,
                 companyName: customer.company_name,
             });
