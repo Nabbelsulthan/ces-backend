@@ -62,6 +62,7 @@ router.post(
                 {
                     customerId: customer.id,
                     username: customer.username,
+                    role: "authenticated",
                 },
                 process.env.JWT_SECRET,
                 {
