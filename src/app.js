@@ -56,6 +56,9 @@ const attendanceRoutes =
 const enquiryRoutes =
   require("./routes/enquiryRoutes");
 
+const customerRealtimeRoutes =
+  require("./routes/customerRealtimeRoutes");
+
 // const customerProjectDetails =
 // require("./routes/customerProjectDetails");
 
@@ -158,6 +161,11 @@ app.use(
 app.use(
   "/api/enquiries",
   enquiryRoutes
+);
+
+app.use(
+    "/api/customer-realtime",
+    customerRealtimeRoutes
 );
 
 
