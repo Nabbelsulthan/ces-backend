@@ -5,6 +5,8 @@ const multer = require("multer");
 
 const pool = require("../config/db");
 
+const authenticateCustomer =
+    require("../middleware/authenticateCustomer");
 // const fs = require("fs");
 
 const {
@@ -166,38 +168,88 @@ router.post(
 
 /* ---------------- GET DOCUMENTS BY PROJECT ---------------- */
 
+// router.get(
+//     "/:projectId",
+//     async (req, res) => {
+
+//         try {
+
+//             const {
+//                 projectId,
+//             } = req.params;
+
+//             const result =
+//                 await pool.query(
+//                     `
+//           SELECT *
+//           FROM public.documents
+//           WHERE project_id = $1
+//           ORDER BY uploaded_at DESC
+//           `,
+//                     [projectId]
+//                 );
+
+//             res.json(
+//                 result.rows
+//             );
+
+//         } catch (error) {
+
+//             console.error(error);
+
+//             res.status(500).json({
+//                 error:
+//                     error.message,
+//             });
+
+//         }
+
+//     }
+// );
+
+
+
+/* ---------------- GET DOCUMENTS BY PROJECT ---------------- */
+
 router.get(
     "/:projectId",
+    authenticateCustomer,
     async (req, res) => {
 
         try {
 
-            const {
-                projectId,
-            } = req.params;
+            const { projectId } = req.params;
 
             const result =
                 await pool.query(
                     `
-          SELECT *
-          FROM public.documents
-          WHERE project_id = $1
-          ORDER BY uploaded_at DESC
-          `,
-                    [projectId]
+                    SELECT
+                        documents.*
+                    FROM public.documents
+                    INNER JOIN public.projects
+                        ON projects.id = documents.project_id
+                    WHERE
+                        documents.project_id = $1
+                        AND projects.customer_id = $2
+                    ORDER BY documents.uploaded_at DESC
+                    `,
+                    [
+                        projectId,
+                        req.customer.customerId,
+                    ]
                 );
 
-            res.json(
-                result.rows
-            );
+            res.json(result.rows);
 
         } catch (error) {
 
-            console.error(error);
+            console.error(
+                "Get documents error:",
+                error
+            );
 
             res.status(500).json({
-                error:
-                    error.message,
+                error: error.message,
             });
 
         }
