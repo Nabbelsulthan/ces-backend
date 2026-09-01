@@ -1,88 +1,215 @@
-// customer portal routes
+// // customer portal routes
+
+
+// const express = require("express");
+// const router = express.Router();
+
+// const pool = require("../config/db");
+
+// // Get all projects for a customer
+// router.get("/customer/:customerId", async (req, res) => {
+
+//     try {
+
+//         const { customerId } = req.params;
+
+//         const result = await pool.query(
+//             `
+//             SELECT
+//                 projects.*,
+//                 customers.company_name
+//             FROM projects
+//             LEFT JOIN customers
+//             ON customers.id = projects.customer_id
+//             WHERE projects.customer_id = $1
+//             ORDER BY projects.id DESC
+//             `,
+//             [customerId]
+//         );
+
+//         res.json(result.rows);
+
+//     } catch (error) {
+
+//         console.error(error);
+
+//         res.status(500).json({
+//             message: "Server Error"
+//         });
+
+//     }
+
+// });
+
+
+// // Get one project
+// router.get("/:id", async (req, res) => {
+
+//     try {
+
+//         const { id } = req.params;
+
+//         const result = await pool.query(
+//             `
+//             SELECT
+//                 projects.*,
+//                 customers.company_name
+//             FROM projects
+//             LEFT JOIN customers
+//             ON customers.id = projects.customer_id
+//             WHERE projects.id = $1
+//             `,
+//             [id]
+//         );
+
+//         if (result.rows.length === 0) {
+
+//             return res.status(404).json({
+//                 message: "Project not found"
+//             });
+
+//         }
+
+//         res.json(result.rows[0]);
+
+//     } catch (error) {
+
+//         console.error(error);
+
+//         res.status(500).json({
+//             message: "Server Error"
+//         });
+
+//     }
+
+// });
+
+// module.exports = router;
+// module.exports = router;
+
 
 
 const express = require("express");
 const router = express.Router();
 
 const pool = require("../config/db");
+const authenticateCustomer = require("../middleware/authenticateCustomer");
 
-// Get all projects for a customer
-router.get("/customer/:customerId", async (req, res) => {
+// =========================================
+// GET ALL PROJECTS FOR LOGGED-IN CUSTOMER
+// =========================================
 
-    try {
+router.get(
+    "/customer/:customerId",
+    authenticateCustomer,
+    async (req, res) => {
 
-        const { customerId } = req.params;
+        try {
 
-        const result = await pool.query(
-            `
-            SELECT
-                projects.*,
-                customers.company_name
-            FROM projects
-            LEFT JOIN customers
-            ON customers.id = projects.customer_id
-            WHERE projects.customer_id = $1
-            ORDER BY projects.id DESC
-            `,
-            [customerId]
-        );
+            const { customerId } = req.params;
 
-        res.json(result.rows);
+            // Never trust the customerId from the URL.
+            // Use the customerId from the verified JWT.
+            if (
+                String(req.customer.customerId) !==
+                String(customerId)
+            ) {
 
-    } catch (error) {
+                return res.status(403).json({
+                    message: "Access denied",
+                });
 
-        console.error(error);
+            }
 
-        res.status(500).json({
-            message: "Server Error"
-        });
+            const result = await pool.query(
+                `
+                SELECT
+                    projects.*,
+                    customers.company_name
+                FROM projects
+                LEFT JOIN customers
+                    ON customers.id = projects.customer_id
+                WHERE projects.customer_id = $1
+                ORDER BY projects.id DESC
+                `,
+                [req.customer.customerId]
+            );
 
-    }
+            res.json(result.rows);
 
-});
+        } catch (error) {
 
+            console.error(
+                "Customer projects error:",
+                error
+            );
 
-// Get one project
-router.get("/:id", async (req, res) => {
-
-    try {
-
-        const { id } = req.params;
-
-        const result = await pool.query(
-            `
-            SELECT
-                projects.*,
-                customers.company_name
-            FROM projects
-            LEFT JOIN customers
-            ON customers.id = projects.customer_id
-            WHERE projects.id = $1
-            `,
-            [id]
-        );
-
-        if (result.rows.length === 0) {
-
-            return res.status(404).json({
-                message: "Project not found"
+            res.status(500).json({
+                message: "Server Error",
             });
 
         }
 
-        res.json(result.rows[0]);
+    }
+);
 
-    } catch (error) {
 
-        console.error(error);
+// =========================================
+// GET ONE PROJECT
+// =========================================
 
-        res.status(500).json({
-            message: "Server Error"
-        });
+router.get(
+    "/:id",
+    authenticateCustomer,
+    async (req, res) => {
+
+        try {
+
+            const { id } = req.params;
+
+            const result = await pool.query(
+                `
+                SELECT
+                    projects.*,
+                    customers.company_name
+                FROM projects
+                LEFT JOIN customers
+                    ON customers.id = projects.customer_id
+                WHERE
+                    projects.id = $1
+                    AND projects.customer_id = $2
+                `,
+                [
+                    id,
+                    req.customer.customerId,
+                ]
+            );
+
+            if (result.rows.length === 0) {
+
+                return res.status(404).json({
+                    message: "Project not found",
+                });
+
+            }
+
+            res.json(result.rows[0]);
+
+        } catch (error) {
+
+            console.error(
+                "Customer project error:",
+                error
+            );
+
+            res.status(500).json({
+                message: "Server Error",
+            });
+
+        }
 
     }
+);
 
-});
 
-module.exports = router;
 module.exports = router;
