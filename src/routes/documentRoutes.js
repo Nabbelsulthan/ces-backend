@@ -5,8 +5,11 @@ const multer = require("multer");
 
 const pool = require("../config/db");
 
-const authenticateCustomer =
-    require("../middleware/authenticateCustomer");
+// const authenticateCustomer =
+//     require("../middleware/authenticateCustomer");
+
+const authenticateAdminOrCustomer =
+    require("../middleware/authenticateAdminOrCustomer");
 // const fs = require("fs");
 
 const {
@@ -211,17 +214,90 @@ router.post(
 
 /* ---------------- GET DOCUMENTS BY PROJECT ---------------- */
 
+// router.get(
+//     "/:projectId",
+//     authenticateCustomer,
+//     async (req, res) => {
+
+//         try {
+
+//             const { projectId } = req.params;
+
+//             const result =
+//                 await pool.query(
+//                     `
+//                     SELECT
+//                         documents.*
+//                     FROM public.documents
+//                     INNER JOIN public.projects
+//                         ON projects.id = documents.project_id
+//                     WHERE
+//                         documents.project_id = $1
+//                         AND projects.customer_id = $2
+//                     ORDER BY documents.uploaded_at DESC
+//                     `,
+//                     [
+//                         projectId,
+//                         req.customer.customerId,
+//                     ]
+//                 );
+
+//             res.json(result.rows);
+
+//         } catch (error) {
+
+//             console.error(
+//                 "Get documents error:",
+//                 error
+//             );
+
+//             res.status(500).json({
+//                 error: error.message,
+//             });
+
+//         }
+
+//     }
+// );
+
+
+
+
+
+
+/* ---------------- GET DOCUMENTS BY PROJECT ---------------- */
+
 router.get(
     "/:projectId",
-    authenticateCustomer,
+    authenticateAdminOrCustomer,
     async (req, res) => {
 
         try {
 
             const { projectId } = req.params;
 
-            const result =
-                await pool.query(
+            let result;
+
+            // ADMIN → can access any project
+            if (req.authType === "admin") {
+
+                result = await pool.query(
+                    `
+                    SELECT
+                        documents.*
+                    FROM public.documents
+                    WHERE documents.project_id = $1
+                    ORDER BY documents.uploaded_at DESC
+                    `,
+                    [projectId]
+                );
+
+            }
+
+            // CUSTOMER → can access only their own project
+            else if (req.authType === "customer") {
+
+                result = await pool.query(
                     `
                     SELECT
                         documents.*
@@ -238,6 +314,16 @@ router.get(
                         req.customer.customerId,
                     ]
                 );
+
+            }
+
+            else {
+
+                return res.status(403).json({
+                    message: "Access denied",
+                });
+
+            }
 
             res.json(result.rows);
 
@@ -256,7 +342,6 @@ router.get(
 
     }
 );
-
 /* ---------------- DELETE DOCUMENT ---------------- */
 
 // router.delete(
