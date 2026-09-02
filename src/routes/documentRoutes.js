@@ -2,7 +2,8 @@
 const express = require("express");
 const router = express.Router();
 const multer = require("multer");
-
+const authenticateAdminOrCustomer =
+    require("../middleware/authenticateAdminOrCustomer");
 const pool = require("../config/db");
 
 // const authenticateCustomer =
@@ -382,6 +383,7 @@ router.get(
 
 router.delete(
     "/:id",
+    authenticateAdminOrCustomer,
     async (req, res) => {
 
         try {
