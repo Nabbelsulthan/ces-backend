@@ -65,49 +65,147 @@ const upload = multer({
 
 /* ---------------- UPLOAD DOCUMENT ---------------- */
 
+// router.post(
+//     "/",
+
+
+//     upload.single("document"),
+//     async (req, res) => {
+
+//         try {
+
+//             console.log("BODY:", req.body);
+//             console.log("FILE:", req.file);
+
+//             const { project_id } =
+//                 req.body;
+
+//             if (!req.file) {
+//                 return res.status(400).json({
+//                     message:
+//                         "No file uploaded",
+//                 });
+//             }
+
+//             //     const result =
+//             //         await pool.query(
+//             //             `
+//             //   INSERT INTO documents
+//             //   (
+//             //     project_id,
+//             //     file_name,
+//             //     file_path
+//             //   )
+//             //   VALUES
+//             //   ($1,$2,$3)
+//             //   RETURNING *
+//             //   `,
+//             //             [
+//             //                 project_id,
+//             //                 req.file.originalname,
+//             //                 req.file.path,
+//             //             ]
+//             //         );
+
+
+//             const safeFileName =
+//                 req.file.originalname.replace(/[^\w.-]/g, "_");
+
+//             const filePath =
+//                 `project-${project_id}/${Date.now()}-${safeFileName}`;
+
+//             await uploadFile(
+//                 "documents",
+//                 filePath,
+//                 req.file
+//             );
+
+//             try {
+
+//                 const result =
+//                     await pool.query(
+//                         `
+//             INSERT INTO public.documents
+//             (
+//                 project_id,
+//                 file_name,
+//                 file_path
+//             )
+//             VALUES
+//             ($1,$2,$3)
+//             RETURNING *
+//             `,
+//                         [
+//                             project_id,
+//                             safeFileName,
+//                             filePath,
+//                         ]
+//                     );
+
+//                 res.status(201).json(
+//                     result.rows[0]
+//                 );
+
+//             } catch (err) {
+
+//                 await deleteFile(
+//                     "documents",
+//                     filePath
+//                 );
+
+//                 throw err;
+
+//             }
+
+//         } catch (error) {
+
+//             console.error(error);
+
+//             res.status(500).json({
+//                 error:
+//                     error.message,
+//             });
+
+//         }
+
+//     }
+// );
+
+
+
+
+
 router.post(
     "/",
+    authenticateAdminOrCustomer,
     upload.single("document"),
     async (req, res) => {
+
+        // Only admins can upload documents
+        if (req.authType !== "admin") {
+            return res.status(403).json({
+                message: "Admin access required",
+            });
+        }
 
         try {
 
             console.log("BODY:", req.body);
             console.log("FILE:", req.file);
 
-            const { project_id } =
-                req.body;
+            const { project_id } = req.body;
 
             if (!req.file) {
                 return res.status(400).json({
-                    message:
-                        "No file uploaded",
+                    message: "No file uploaded",
                 });
             }
 
-            //     const result =
-            //         await pool.query(
-            //             `
-            //   INSERT INTO documents
-            //   (
-            //     project_id,
-            //     file_name,
-            //     file_path
-            //   )
-            //   VALUES
-            //   ($1,$2,$3)
-            //   RETURNING *
-            //   `,
-            //             [
-            //                 project_id,
-            //                 req.file.originalname,
-            //                 req.file.path,
-            //             ]
-            //         );
-
-
             const safeFileName =
-                req.file.originalname.replace(/[^\w.-]/g, "_");
+                req.file.originalname.replace(
+                    /[^\w.-]/g,
+                    "_"
+                );
 
             const filePath =
                 `project-${project_id}/${Date.now()}-${safeFileName}`;
@@ -123,16 +221,16 @@ router.post(
                 const result =
                     await pool.query(
                         `
-            INSERT INTO public.documents
-            (
-                project_id,
-                file_name,
-                file_path
-            )
-            VALUES
-            ($1,$2,$3)
-            RETURNING *
-            `,
+                        INSERT INTO public.documents
+                        (
+                            project_id,
+                            file_name,
+                            file_path
+                        )
+                        VALUES
+                        ($1, $2, $3)
+                        RETURNING *
+                        `,
                         [
                             project_id,
                             safeFileName,
@@ -152,7 +250,6 @@ router.post(
                 );
 
                 throw err;
-
             }
 
         } catch (error) {
@@ -160,15 +257,12 @@ router.post(
             console.error(error);
 
             res.status(500).json({
-                error:
-                    error.message,
+                error: error.message,
             });
 
         }
-
     }
 );
-
 /* ---------------- GET DOCUMENTS BY PROJECT ---------------- */
 
 // router.get(
