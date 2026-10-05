@@ -56,6 +56,9 @@ const attendanceRoutes =
 const enquiryRoutes =
   require("./routes/enquiryRoutes");
 
+const procurementRoutes =
+  require("./routes/procurementRoutes");
+
 const customerRealtimeRoutes =
   require("./routes/customerRealtimeRoutes");
 
@@ -164,8 +167,13 @@ app.use(
 );
 
 app.use(
-    "/api/customer-realtime",
-    customerRealtimeRoutes
+  "/api/procurement",
+  procurementRoutes
+);
+
+app.use(
+  "/api/customer-realtime",
+  customerRealtimeRoutes
 );
 
 
