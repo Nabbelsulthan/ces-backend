@@ -510,6 +510,172 @@ router.put("/materials/:id", async (req, res) => {
 });
 
 
+
+/* =========================================================
+  PROCUREMENT PROJECTS
+  ========================================================= */
+
+/*
+|--------------------------------------------------------------------------
+| GET /api/procurement/projects
+|--------------------------------------------------------------------------
+| Returns only procurement projects.
+|--------------------------------------------------------------------------
+*/
+
+router.get("/projects", async (req, res) => {
+    try {
+        const result = await pool.query(
+            `
+            SELECT
+                id,
+                project_code,
+                project_name,
+                description,
+                status,
+                created_at,
+                updated_at
+            FROM procurement_projects
+            ORDER BY id ASC
+            `
+        );
+
+        res.json(result.rows);
+
+    } catch (error) {
+        console.error("Get procurement projects error:", error);
+
+        res.status(500).json({
+            message: "Failed to load procurement projects"
+        });
+    }
+});
+
+
+/*
+|--------------------------------------------------------------------------
+| POST /api/procurement/projects
+|--------------------------------------------------------------------------
+| Creates a NEW procurement-only project.
+|
+| IMPORTANT:
+| This does NOT insert anything into the main "projects" table.
+|--------------------------------------------------------------------------
+*/
+
+router.post("/projects", async (req, res) => {
+    try {
+        const {
+            project_name,
+            description = null
+        } = req.body;
+
+        if (
+            !project_name ||
+            typeof project_name !== "string" ||
+            !project_name.trim()
+        ) {
+            return res.status(400).json({
+                message: "Project name is required"
+            });
+        }
+
+        const name = project_name.trim();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Generate next procurement number
+        |
+        | PROC-001
+        | PROC-002
+        | PROC-003
+        | ...
+        |--------------------------------------------------------------------------
+        */
+
+        const nextNumberResult = await pool.query(
+            `
+            SELECT
+                COALESCE(
+                    MAX(
+                        (SUBSTRING(project_code FROM '^PROC-([0-9]+)$'))::BIGINT
+                    ),
+                    0
+                ) + 1 AS next_number
+            FROM procurement_projects
+            `
+        );
+
+        const nextNumber =
+            Number(nextNumberResult.rows[0].next_number);
+
+        const projectCode =
+            `PROC-${String(nextNumber).padStart(3, "0")}`;
+
+        /*
+        |--------------------------------------------------------------------------
+        | Insert ONLY into procurement_projects
+        |--------------------------------------------------------------------------
+        */
+
+        const result = await pool.query(
+            `
+            INSERT INTO procurement_projects
+            (
+                project_code,
+                project_name,
+                description,
+                status
+            )
+            VALUES
+            (
+                $1,
+                $2,
+                $3,
+                'active'
+            )
+            RETURNING
+                id,
+                project_code,
+                project_name,
+                description,
+                status,
+                created_at,
+                updated_at
+            `,
+            [
+                projectCode,
+                name,
+                description
+                    ? String(description).trim()
+                    : null
+            ]
+        );
+
+        res.status(201).json(result.rows[0]);
+
+    } catch (error) {
+        console.error("Create procurement project error:", error);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Handle duplicate PROC code safely
+        |--------------------------------------------------------------------------
+        */
+
+        if (error.code === "23505") {
+            return res.status(409).json({
+                message:
+                    "A procurement project with this code already exists. Please try again."
+            });
+        }
+
+        res.status(500).json({
+            message: "Failed to create procurement project"
+        });
+    }
+});
+
 /* =========================================================
    PROJECT MATERIALS / BOM
    ========================================================= */
@@ -618,19 +784,33 @@ router.post("/projects/:projectId/materials", async (req, res) => {
         |--------------------------------------------------------------------------
         */
 
+        // const project = await pool.query(
+        //     `
+        //     SELECT id
+        //     FROM projects
+        //     WHERE id = $1
+        //     LIMIT 1
+        //     `,
+        //     [projectId]
+        // );
+
         const project = await pool.query(
             `
-            SELECT id
-            FROM projects
-            WHERE id = $1
-            LIMIT 1
-            `,
+    SELECT
+        id,
+        project_code,
+        project_name
+    FROM procurement_projects
+    WHERE id = $1
+      AND status = 'active'
+    LIMIT 1
+    `,
             [projectId]
         );
 
         if (project.rows.length === 0) {
             return res.status(404).json({
-                message: "Project not found"
+                message: "Procurement project not found"
             });
         }
 
