@@ -1889,4 +1889,82 @@ router.delete(
 );
 
 
+
+
+// Permanently delete a vendor
+router.delete("/vendors/:id", async (req, res) => {
+  try {
+    const result = await pool.query(
+      "DELETE FROM procurement_vendors WHERE id = $1 RETURNING id",
+      [req.params.id]
+    );
+
+    if (!result.rowCount) {
+      return res.status(404).json({ message: "Vendor not found." });
+    }
+
+    return res.json({ message: "Vendor permanently deleted." });
+  } catch (error) {
+    if (error.code === "23503") {
+      return res.status(409).json({
+        message: "This vendor is referenced by existing procurement data and cannot be deleted."
+      });
+    }
+
+    console.error("Delete vendor error:", error);
+    return res.status(500).json({ message: "Failed to delete vendor." });
+  }
+});
+
+// Permanently delete a make
+router.delete("/makes/:id", async (req, res) => {
+  try {
+    const result = await pool.query(
+      "DELETE FROM procurement_makes WHERE id = $1 RETURNING id",
+      [req.params.id]
+    );
+
+    if (!result.rowCount) {
+      return res.status(404).json({ message: "Make not found." });
+    }
+
+    return res.json({ message: "Make permanently deleted." });
+  } catch (error) {
+    if (error.code === "23503") {
+      return res.status(409).json({
+        message: "This make is referenced by existing procurement data and cannot be deleted."
+      });
+    }
+
+    console.error("Delete make error:", error);
+    return res.status(500).json({ message: "Failed to delete make." });
+  }
+});
+
+// Permanently delete a material
+router.delete("/materials/:id", async (req, res) => {
+  try {
+    const result = await pool.query(
+      "DELETE FROM procurement_materials WHERE id = $1 RETURNING id",
+      [req.params.id]
+    );
+
+    if (!result.rowCount) {
+      return res.status(404).json({ message: "Material not found." });
+    }
+
+    return res.json({ message: "Material permanently deleted." });
+  } catch (error) {
+    if (error.code === "23503") {
+      return res.status(409).json({
+        message: "This material is used in an existing procurement BOM and cannot be deleted."
+      });
+    }
+
+    console.error("Delete material error:", error);
+    return res.status(500).json({ message: "Failed to delete material." });
+  }
+});
+
+
 module.exports = router;
